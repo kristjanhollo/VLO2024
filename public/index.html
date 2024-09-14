@@ -56,21 +56,6 @@
             margin-right: 10px;
         }
 
-        .search-bar button {
-            padding: 10px 20px;
-            font-size: 16px;
-            cursor: pointer;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            margin-right: 10px;
-        }
-
-        .search-bar button:hover {
-            background-color: #0056b3;
-        }
-
         .group-list {
             list-style-type: none;
             padding: 0;
@@ -129,7 +114,6 @@
     <!-- Search Bar -->
     <div class="search-bar">
         <input type="text" id="searchInput" placeholder="Search for group or individual...">
-        <button id="clearSearchBtn">Clear</button>
     </div>
 
     <!-- Group List -->
@@ -247,18 +231,22 @@
         // Handle search input (handles both groups and users)
         const searchInput = document.getElementById("searchInput");
 
-        // Automatically clear the search box when clicked
+        // Automatically clear the search box when clicked and show all groups
         searchInput.addEventListener('focus', function() {
             searchInput.value = ''; // Clear search input on focus
+            filterGroups(''); // Reset search and display all groups
+        });
+
+        // Add event listener for Enter keypress to show all groups if search is empty
+        searchInput.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter' && searchInput.value === '') {
+                filterGroups(''); // Show all groups when Enter is pressed and search is empty
+            }
         });
 
         searchInput.addEventListener('input', function () {
             filterGroups(searchInput.value); // Apply search filter when typing
         });
-
-        // Handle clear button click
-        const clearSearchBtn = document.getElementById("clearSearchBtn");
-        clearSearchBtn.addEventListener('click', clearSearch);
 
         // Handle update data button click
         const updateDataBtn = document.getElementById("updateDataBtn");
