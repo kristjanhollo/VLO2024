@@ -247,9 +247,10 @@
         // Handle search input (handles both groups and users)
         const searchInput = document.getElementById("searchInput");
 
-        // Automatically clear the search box when clicked
+        // Automatically clear the search box when clicked and show all groups
         searchInput.addEventListener('focus', function() {
             searchInput.value = ''; // Clear search input on focus
+            filterGroups(''); // Reset search and display all groups
         });
 
         searchInput.addEventListener('input', function () {
