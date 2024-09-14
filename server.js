@@ -11,23 +11,32 @@ const PORT = process.env.PORT || 3000;
 
 let groups = []; // To store the grouped players
 
-// Function to process and assign players to groups
-const processPlayerGroups = (results) => {
+// Function to process and assign players to groups while keeping check-in status
+const processPlayerGroupsWithCheckIn = (results) => {
     const groupMap = {};
+    const existingUsers = {};
+
+    // Map existing check-in statuses
+    groups.forEach(group => {
+        group.users.forEach(user => {
+            existingUsers[user.username] = user.checkedIn; // Store check-in status by username
+        });
+    });
 
     // Iterate over each player in the Results array
     results.forEach(player => {
         const groupNumber = player.Group;
+        const username = player.Name;
 
         // If the group does not exist in the map, create a new array for it
         if (!groupMap[groupNumber]) {
             groupMap[groupNumber] = [];
         }
 
-        // Add the player to the appropriate group
+        // Add the player to the appropriate group, preserving check-in status if it exists
         groupMap[groupNumber].push({
-            username: player.Name,
-            checkedIn: false
+            username: username,
+            checkedIn: existingUsers[username] || false // Preserve check-in status or default to false
         });
     });
 
@@ -43,7 +52,7 @@ const fetchPlayerData = async () => {
     try {
         const response = await axios.get('https://discgolfmetrix.com/api.php?content=result&id=3084337');
         const results = response.data.Competition.Results; // Access the 'Results' array
-        processPlayerGroups(results); // Process and group players
+        processPlayerGroupsWithCheckIn(results); // Process and group players while keeping check-in status
         console.log('Groups processed:', groups);
     } catch (error) {
         console.error('Error fetching player data:', error);
@@ -89,6 +98,13 @@ io.on('connection', (socket) => {
 
         // Broadcast the updated groups to all connected clients
         io.emit('loadGroups', groups);
+    });
+
+    // Handle API data update
+    socket.on('updateDataFromAPI', async () => {
+        console.log('Updating data from API...');
+        await fetchPlayerData(); // Fetch updated data from the API and process it
+        io.emit('loadGroups', groups); // Broadcast the updated groups to all clients
     });
 
     socket.on('disconnect', () => {
