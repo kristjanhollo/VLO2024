@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Event Check-In</title>
+    <title>VLO2024</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -13,12 +13,29 @@
 
         .search-bar {
             margin-bottom: 20px;
+            display: flex;
+            align-items: center;
         }
 
         .search-bar input[type="text"] {
             width: 300px;
             padding: 10px;
             font-size: 16px;
+            margin-right: 10px;
+        }
+
+        .search-bar button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+        }
+
+        .search-bar button:hover {
+            background-color: #0056b3;
         }
 
         .group-list {
@@ -70,11 +87,12 @@
 </head>
 <body>
 
-    <h1>Event Check-In</h1>
+    <h1>VLO2024</h1>
 
     <!-- Search Bar -->
     <div class="search-bar">
         <input type="text" id="searchInput" placeholder="Search for group or individual...">
+        <button id="clearSearchBtn">Clear</button>
     </div>
 
     <!-- Group List -->
@@ -86,6 +104,7 @@
     <script>
         const socket = io();
         const groupList = document.getElementById("groupList");
+        let currentSearchQuery = ''; // To store the current search query
 
         // Function to display groups
         function displayGroups(groups) {
@@ -99,7 +118,7 @@
                 groupHeader.innerHTML = `
                     <h3>${group.groupName}</h3>
                     <label>
-                        <input type="checkbox" class="group-checkbox"> Check-in all
+                        <input type="checkbox" class="group-checkbox" ${group.users.every(u => u.checkedIn) ? 'checked' : ''}> Check-in all
                     </label>
                 `;
 
@@ -136,17 +155,14 @@
                 groupItem.appendChild(userList);
                 groupList.appendChild(groupItem);
             });
+
+            // After displaying, apply the current search filter
+            filterGroups(currentSearchQuery);
         }
 
-        // Receive updated groups from the server
-        socket.on('loadGroups', (groups) => {
-            displayGroups(groups);
-        });
-
-        // Search function (handles both groups and users)
-        const searchInput = document.getElementById("searchInput");
-        searchInput.addEventListener('input', function () {
-            const searchQuery = searchInput.value.toLowerCase();
+        // Function to filter groups and users based on search query
+        function filterGroups(searchQuery) {
+            currentSearchQuery = searchQuery.toLowerCase(); // Store current search query
             const groupItems = Array.from(document.querySelectorAll('.group-item'));
 
             groupItems.forEach(groupItem => {
@@ -157,7 +173,7 @@
                 let userMatches = false;
                 userListItems.forEach(li => {
                     const username = li.querySelector('label').textContent.toLowerCase();
-                    if (username.includes(searchQuery)) {
+                    if (username.includes(currentSearchQuery)) {
                         li.style.display = ''; // Show the user
                         userMatches = true;
                     } else {
@@ -165,14 +181,40 @@
                     }
                 });
 
-                // Show group if either the group name or any user within matches the search
-                if (groupName.includes(searchQuery) || userMatches) {
-                    groupItem.style.display = '';
+                // Show the entire group if the group name matches the search query
+                if (groupName.includes(currentSearchQuery)) {
+                    groupItem.style.display = '';  // Show group
+                    userListItems.forEach(li => li.style.display = '');  // Show all users in the group
+                } else if (userMatches) {
+                    groupItem.style.display = '';  // Show group but filtered users
                 } else {
-                    groupItem.style.display = 'none';
+                    groupItem.style.display = 'none';  // Hide the group
                 }
             });
+        }
+
+        // Function to clear the search and reset the list
+        function clearSearch() {
+            searchInput.value = ''; // Clear the search input field
+            currentSearchQuery = ''; // Reset the search query
+            filterGroups(''); // Reset the group and user visibility
+        }
+
+        // Receive updated groups from the server
+        socket.on('loadGroups', (groups) => {
+            displayGroups(groups); // Display groups and maintain search filter
         });
+
+        // Handle search input (handles both groups and users)
+        const searchInput = document.getElementById("searchInput");
+        searchInput.addEventListener('input', function () {
+            filterGroups(searchInput.value); // Apply search filter when typing
+        });
+
+        // Handle clear button click
+        const clearSearchBtn = document.getElementById("clearSearchBtn");
+        clearSearchBtn.addEventListener('click', clearSearch);
+
     </script>
 
 </body>
