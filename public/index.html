@@ -32,6 +32,7 @@
             color: white;
             border: none;
             border-radius: 4px;
+            margin-right: 10px;
         }
 
         .search-bar button:hover {
@@ -93,6 +94,7 @@
     <div class="search-bar">
         <input type="text" id="searchInput" placeholder="Search for group or individual...">
         <button id="clearSearchBtn">Clear</button>
+        <button id="updateDataBtn">Update Data</button> <!-- Update Button -->
     </div>
 
     <!-- Group List -->
@@ -201,7 +203,9 @@
         }
 
         // Receive updated groups from the server
-        socket.on('loadGroups', (groups) => {
+        let groups = [];
+        socket.on('loadGroups', (data) => {
+            groups = data; // Store the groups data
             displayGroups(groups); // Display groups and maintain search filter
         });
 
@@ -214,6 +218,12 @@
         // Handle clear button click
         const clearSearchBtn = document.getElementById("clearSearchBtn");
         clearSearchBtn.addEventListener('click', clearSearch);
+
+        // Handle update data button click
+        const updateDataBtn = document.getElementById("updateDataBtn");
+        updateDataBtn.addEventListener('click', function() {
+            socket.emit('updateDataFromAPI'); // Request to update data from API
+        });
 
     </script>
 
