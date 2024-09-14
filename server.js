@@ -1,33 +1,57 @@
 const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
-
-// Sample groups with users and their check-in status
-let groups = [
-    { 
-        groupName: 'Group A', 
-        users: [
-            { username: 'john_doe', checkedIn: false },
-            { username: 'jane_smith', checkedIn: false },
-            { username: 'michael_clark', checkedIn: false },
-            { username: 'emily_watson', checkedIn: false }
-        ]
-    },
-    { 
-        groupName: 'Group B', 
-        users: [
-            { username: 'david_lee', checkedIn: false },
-            { username: 'linda_jones', checkedIn: false },
-            { username: 'charles_davis', checkedIn: false },
-            { username: 'susan_miller', checkedIn: false }
-        ]
-    }
-];
+const axios = require('axios');
 
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server);
 
+let groups = []; // To store the grouped players
+
+// Function to process and assign players to groups
+const processPlayerGroups = (results) => {
+    const groupMap = {};
+
+    // Iterate over each player in the Results array
+    results.forEach(player => {
+        const groupNumber = player.Group;
+
+        // If the group does not exist in the map, create a new array for it
+        if (!groupMap[groupNumber]) {
+            groupMap[groupNumber] = [];
+        }
+
+        // Add the player to the appropriate group
+        groupMap[groupNumber].push({
+            username: player.Name,
+            checkedIn: false
+        });
+    });
+
+    // Convert groupMap into the desired array format
+    groups = Object.keys(groupMap).map(groupNumber => ({
+        groupName: `Group ${groupNumber}`,
+        users: groupMap[groupNumber]
+    }));
+};
+
+// Function to fetch player data from the API
+const fetchPlayerData = async () => {
+    try {
+        const response = await axios.get('https://discgolfmetrix.com/api.php?content=result&id=3084337');
+        const results = response.data.Competition.Results; // Access the 'Results' array
+        processPlayerGroups(results); // Process and group players
+        console.log('Groups processed:', groups);
+    } catch (error) {
+        console.error('Error fetching player data:', error);
+    }
+};
+
+// Fetch player data when the server starts
+fetchPlayerData();
+
+// Serve static files (the HTML page) from the "public" directory
 app.use(express.static('public'));
 
 // Handle socket connection
@@ -70,6 +94,7 @@ io.on('connection', (socket) => {
     });
 });
 
+// Start the server on port 3000
 server.listen(3000, () => {
     console.log('Server is running on http://localhost:3000');
 });
