@@ -23,7 +23,7 @@
             font-size: 24px;
         }
 
-        .update-button {
+        .update-button, .filter-button {
             padding: 10px 20px;
             font-size: 16px;
             cursor: pointer;
@@ -31,9 +31,10 @@
             color: white;
             border: none;
             border-radius: 4px;
+            margin-right: 10px;
         }
 
-        .update-button:hover {
+        .update-button:hover, .filter-button:hover {
             background-color: #0056b3;
         }
 
@@ -105,10 +106,13 @@
 </head>
 <body>
 
-    <!-- Header with Title and Update Button -->
+    <!-- Header with Title, Update Button, and Filter Button -->
     <div class="header">
         <h1>VLO2024</h1>
-        <button id="updateDataBtn" class="update-button">Update Data</button> <!-- Update Button -->
+        <div>
+            <button id="filterButton" class="filter-button">Filter Checked-In</button> <!-- Filter Button -->
+            <button id="updateDataBtn" class="update-button">Update Data</button> <!-- Update Button -->
+        </div>
     </div>
 
     <!-- Search Bar -->
@@ -126,6 +130,7 @@
         const socket = io();
         const groupList = document.getElementById("groupList");
         let currentSearchQuery = ''; // To store the current search query
+        let filterCheckedIn = false; // To store the filter state for checked-in players/groups
 
         // Function to display groups
         function displayGroups(groups) {
@@ -144,6 +149,7 @@
                 `;
 
                 const userList = document.createElement('ul');
+                let allCheckedIn = true;
                 group.users.forEach(user => {
                     const li = document.createElement('li');
                     li.classList.toggle('checked-in', user.checkedIn); // Add checked-in class if true
@@ -162,8 +168,26 @@
                         });
                     });
 
+                    // Hide checked-in users if filter is active
+                    if (filterCheckedIn && user.checkedIn) {
+                        li.style.display = 'none';
+                    } else {
+                        li.style.display = '';
+                    }
+
+                    if (!user.checkedIn) {
+                        allCheckedIn = false;
+                    }
+
                     userList.appendChild(li);
                 });
+
+                // Hide fully checked-in groups if filter is active
+                if (filterCheckedIn && allCheckedIn) {
+                    groupItem.style.display = 'none';
+                } else {
+                    groupItem.style.display = '';
+                }
 
                 groupHeader.querySelector('.group-checkbox').addEventListener('change', function () {
                     socket.emit('checkInGroup', {
@@ -214,11 +238,10 @@
             });
         }
 
-        // Function to clear the search and reset the list
-        function clearSearch() {
-            searchInput.value = ''; // Clear the search input field
-            currentSearchQuery = ''; // Reset the search query
-            filterGroups(''); // Reset the group and user visibility
+        // Function to toggle the filter for checked-in users and groups
+        function toggleFilter() {
+            filterCheckedIn = !filterCheckedIn; // Toggle the filter state
+            displayGroups(groups); // Re-display groups with the new filter state
         }
 
         // Receive updated groups from the server
@@ -231,21 +254,18 @@
         // Handle search input (handles both groups and users)
         const searchInput = document.getElementById("searchInput");
 
-        // Automatically clear the search box when clicked and show all groups
-        searchInput.addEventListener('focus', function() {
-            searchInput.value = ''; // Clear search input on focus
-        });
-
-        // Add event listener for Enter keypress to show all groups if search is empty
-        searchInput.addEventListener('keydown', function(event) {
-            if (event.key === 'Enter' && searchInput.value === '') {
-                filterGroups(''); // Show all groups when Enter is pressed and search is empty
+        // Listen to input event to show or filter groups
+        searchInput.addEventListener('input', function () {
+            if (searchInput.value === '') {
+                filterGroups(''); // Show all groups if search input is empty
+            } else {
+                filterGroups(searchInput.value); // Apply search filter when typing
             }
         });
 
-        searchInput.addEventListener('input', function () {
-            filterGroups(searchInput.value); // Apply search filter when typing
-        });
+        // Handle filter button click
+        const filterButton = document.getElementById("filterButton");
+        filterButton.addEventListener('click', toggleFilter);
 
         // Handle update data button click
         const updateDataBtn = document.getElementById("updateDataBtn");
