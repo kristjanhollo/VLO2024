@@ -23,6 +23,11 @@
             font-size: 24px;
         }
 
+        .counter {
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+
         .update-button, .filter-button {
             padding: 10px 20px;
             font-size: 16px;
@@ -103,10 +108,10 @@
             align-items: center;
         }
 
-        /* New class to hide elements */
         .hidden {
             display: none;
         }
+
     </style>
 </head>
 <body>
@@ -115,9 +120,14 @@
     <div class="header">
         <h1>VLO2024</h1>
         <div>
-            <button id="filterButton" class="filter-button">Filter Checked-In</button> <!-- Filter Button -->
+            <button id="filterButton" class="filter-button">Filter OFF</button> <!-- Filter Button -->
             <button id="updateDataBtn" class="update-button">Update Data</button> <!-- Update Button -->
         </div>
+    </div>
+
+    <!-- Counter for checked-in users -->
+    <div class="counter">
+        <span id="checkedInCounter">0</span> people out of <span id="totalUsers">0</span> have checked in.
     </div>
 
     <!-- Search Bar -->
@@ -134,6 +144,9 @@
     <script>
         const socket = io();
         const groupList = document.getElementById("groupList");
+        const checkedInCounter = document.getElementById("checkedInCounter");
+        const totalUsers = document.getElementById("totalUsers");
+        const filterButton = document.getElementById("filterButton");
         let currentSearchQuery = ''; // To store the current search query
         let filterCheckedIn = false; // To store the filter state for checked-in players/groups
 
@@ -143,6 +156,8 @@
             groups.forEach(group => {
                 const groupItem = document.createElement('div');
                 groupItem.classList.add('group-item');
+
+                const allCheckedInGroup = group.users.every(user => user.checkedIn);
                 
                 const groupHeader = document.createElement('div');
                 groupHeader.classList.add('group-header');
@@ -154,7 +169,8 @@
                 `;
 
                 const userList = document.createElement('ul');
-                let allCheckedIn = true;
+                let allCheckedIn = true; // Assume all users are checked-in initially
+                
                 group.users.forEach(user => {
                     const li = document.createElement('li');
                     li.classList.toggle('checked-in', user.checkedIn); // Add checked-in class if true
@@ -173,21 +189,25 @@
                         });
                     });
 
+                    // If any user is not checked in, the group is not fully checked in
                     if (!user.checkedIn) {
                         allCheckedIn = false;
                     }
 
-                    // Apply the hidden class based on the filter state
+                    // Apply the hidden class based on the filter state for individual users
                     if (filterCheckedIn && user.checkedIn) {
                         li.classList.add('hidden');
                     } else {
                         li.classList.remove('hidden');
                     }
 
+                    groupItem.style = allCheckedIn && filterCheckedIn ? 'display: none;' : '';
+                    li.style.display = user.checkedIn && filterCheckedIn ? 'none' : '';
+
                     userList.appendChild(li);
                 });
 
-                // Hide fully checked-in groups if filter is active
+                // Hide fully checked-in groups if filter is active and all users are checked in
                 if (filterCheckedIn && allCheckedIn) {
                     groupItem.classList.add('hidden');
                 } else {
@@ -246,6 +266,8 @@
         // Function to toggle the filter for checked-in users and groups
         function toggleFilter() {
             filterCheckedIn = !filterCheckedIn; // Toggle the filter state
+            // Update the button text based on filter state
+            filterButton.textContent = filterCheckedIn ? 'Filter ON' : 'Filter OFF';
             displayGroups(groups); // Re-display groups with the new filter state
         }
 
@@ -269,13 +291,18 @@
         });
 
         // Handle filter button click
-        const filterButton = document.getElementById("filterButton");
         filterButton.addEventListener('click', toggleFilter);
 
         // Handle update data button click
         const updateDataBtn = document.getElementById("updateDataBtn");
         updateDataBtn.addEventListener('click', function() {
             socket.emit('updateDataFromAPI'); // Request to update data from API
+        });
+
+        // Update the checked-in counter
+        socket.on('checkedInCount', (data) => {
+            checkedInCounter.textContent = data.checkedInUsers;
+            totalUsers.textContent = data.totalUsers;
         });
 
     </script>
