@@ -102,6 +102,11 @@
             justify-content: space-between;
             align-items: center;
         }
+
+        /* New class to hide elements */
+        .hidden {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -172,11 +177,11 @@
                         allCheckedIn = false;
                     }
 
-                    // Hide checked-in users if filter is active
+                    // Apply the hidden class based on the filter state
                     if (filterCheckedIn && user.checkedIn) {
-                        li.style.display = 'none';
+                        li.classList.add('hidden');
                     } else {
-                        li.style.display = '';
+                        li.classList.remove('hidden');
                     }
 
                     userList.appendChild(li);
@@ -184,9 +189,9 @@
 
                 // Hide fully checked-in groups if filter is active
                 if (filterCheckedIn && allCheckedIn) {
-                    groupItem.style.display = 'none';
+                    groupItem.classList.add('hidden');
                 } else {
-                    groupItem.style.display = '';
+                    groupItem.classList.remove('hidden');
                 }
 
                 groupHeader.querySelector('.group-checkbox').addEventListener('change', function () {
@@ -219,21 +224,21 @@
                 userListItems.forEach(li => {
                     const username = li.querySelector('label').textContent.toLowerCase();
                     if (username.includes(currentSearchQuery)) {
-                        li.style.display = ''; // Show the user
+                        li.classList.remove('hidden'); // Show the user
                         userMatches = true;
                     } else {
-                        li.style.display = 'none'; // Hide the user
+                        li.classList.add('hidden'); // Hide the user
                     }
                 });
 
                 // Show the entire group if the group name matches the search query
                 if (groupName.includes(currentSearchQuery)) {
-                    groupItem.style.display = '';  // Show group
-                    userListItems.forEach(li => li.style.display = '');  // Show all users in the group
+                    groupItem.classList.remove('hidden');  // Show group
+                    userListItems.forEach(li => li.classList.remove('hidden'));  // Show all users in the group
                 } else if (userMatches) {
-                    groupItem.style.display = '';  // Show group but filtered users
+                    groupItem.classList.remove('hidden');  // Show group but filtered users
                 } else {
-                    groupItem.style.display = 'none';  // Hide the group
+                    groupItem.classList.add('hidden');  // Hide the group
                 }
             });
         }
