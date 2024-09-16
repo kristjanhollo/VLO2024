@@ -168,15 +168,15 @@
                         });
                     });
 
+                    if (!user.checkedIn) {
+                        allCheckedIn = false;
+                    }
+
                     // Hide checked-in users if filter is active
                     if (filterCheckedIn && user.checkedIn) {
                         li.style.display = 'none';
                     } else {
                         li.style.display = '';
-                    }
-
-                    if (!user.checkedIn) {
-                        allCheckedIn = false;
                     }
 
                     userList.appendChild(li);
