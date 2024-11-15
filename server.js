@@ -47,13 +47,6 @@ const processPlayerGroupsWithCheckIn = (results) => {
     }));
 };
 
-// Function to calculate the number of checked-in users
-const calculateCheckedIn = () => {
-    const totalUsers = groups.reduce((acc, group) => acc + group.users.length, 0);
-    const checkedInUsers = groups.reduce((acc, group) => acc + group.users.filter(user => user.checkedIn).length, 0);
-    return { checkedInUsers, totalUsers };
-};
-
 // Function to fetch player data from the API
 const fetchPlayerData = async () => {
     try {
@@ -66,6 +59,25 @@ const fetchPlayerData = async () => {
     }
 };
 
+// Function to calculate the checked-in and total user counts
+const calculateCheckedInCounts = () => {
+    let totalUsers = 0;
+    let checkedInUsers = 0;
+
+    groups.forEach(group => {
+        totalUsers += group.users.length;
+        checkedInUsers += group.users.filter(user => user.checkedIn).length;
+    });
+
+    return { totalUsers, checkedInUsers };
+};
+
+// Emit updated counts whenever group data changes
+const emitCheckedInCounts = () => {
+    const counts = calculateCheckedInCounts();
+    io.emit('checkedInCount', counts); // Send counts to all clients
+};
+
 // Fetch player data when the server starts
 fetchPlayerData();
 
@@ -76,9 +88,9 @@ app.use(express.static('public'));
 io.on('connection', (socket) => {
     console.log('A user connected');
 
-    // Send the current group list and checked-in count to the client when they connect
+    // Send the current group list and counts to the client when they connect
     socket.emit('loadGroups', groups);
-    socket.emit('checkedInCount', calculateCheckedIn());
+    emitCheckedInCounts();
 
     // Handle individual user check-in updates
     socket.on('checkInUser', (data) => {
@@ -89,9 +101,8 @@ io.on('connection', (socket) => {
             )
         }));
 
-        // Broadcast the updated groups and checked-in count to all connected clients
-        io.emit('loadGroups', groups);
-        io.emit('checkedInCount', calculateCheckedIn());
+        io.emit('loadGroups', groups); // Broadcast updated groups
+        emitCheckedInCounts(); // Emit updated counts
     });
 
     // Handle group-level check-in updates
@@ -105,17 +116,16 @@ io.on('connection', (socket) => {
                 : group
         );
 
-        // Broadcast the updated groups and checked-in count to all connected clients
-        io.emit('loadGroups', groups);
-        io.emit('checkedInCount', calculateCheckedIn());
+        io.emit('loadGroups', groups); // Broadcast updated groups
+        emitCheckedInCounts(); // Emit updated counts
     });
 
     // Handle API data update
     socket.on('updateDataFromAPI', async () => {
         console.log('Updating data from API...');
-        await fetchPlayerData(); // Fetch updated data from the API and process it
-        io.emit('loadGroups', groups); // Broadcast the updated groups to all clients
-        io.emit('checkedInCount', calculateCheckedIn()); // Broadcast the updated checked-in count
+        await fetchPlayerData(); // Fetch updated data
+        io.emit('loadGroups', groups); // Broadcast updated groups
+        emitCheckedInCounts(); // Emit updated counts
     });
 
     socket.on('disconnect', () => {
@@ -125,5 +135,5 @@ io.on('connection', (socket) => {
 
 // Start the server on port 3000
 server.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+    console.log(`Server is running on port ${PORT}`);
 });
