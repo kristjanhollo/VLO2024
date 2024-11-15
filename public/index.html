@@ -111,7 +111,6 @@
         .hidden {
             display: none;
         }
-
     </style>
 </head>
 <body>
@@ -147,6 +146,7 @@
         const checkedInCounter = document.getElementById("checkedInCounter");
         const totalUsers = document.getElementById("totalUsers");
         const filterButton = document.getElementById("filterButton");
+        const searchInput = document.getElementById("searchInput");
         let currentSearchQuery = ''; // To store the current search query
         let filterCheckedIn = false; // To store the filter state for checked-in players/groups
 
@@ -169,8 +169,6 @@
                 `;
 
                 const userList = document.createElement('ul');
-                let allCheckedIn = true; // Assume all users are checked-in initially
-                
                 group.users.forEach(user => {
                     const li = document.createElement('li');
                     li.classList.toggle('checked-in', user.checkedIn); // Add checked-in class if true
@@ -189,26 +187,18 @@
                         });
                     });
 
-                    // If any user is not checked in, the group is not fully checked in
-                    if (!user.checkedIn) {
-                        allCheckedIn = false;
-                    }
-
-                    // Apply the hidden class based on the filter state for individual users
+                    // Filter checked-in users if the filter is active
                     if (filterCheckedIn && user.checkedIn) {
                         li.classList.add('hidden');
                     } else {
                         li.classList.remove('hidden');
                     }
 
-                    groupItem.style = allCheckedIn && filterCheckedIn ? 'display: none;' : '';
-                    li.style.display = user.checkedIn && filterCheckedIn ? 'none' : '';
-
                     userList.appendChild(li);
                 });
 
                 // Hide fully checked-in groups if filter is active and all users are checked in
-                if (filterCheckedIn && allCheckedIn) {
+                if (filterCheckedIn && allCheckedInGroup) {
                     groupItem.classList.add('hidden');
                 } else {
                     groupItem.classList.remove('hidden');
@@ -226,7 +216,7 @@
                 groupList.appendChild(groupItem);
             });
 
-            // After displaying, apply the current search filter
+            // Apply search filter after displaying groups
             filterGroups(currentSearchQuery);
         }
 
@@ -243,7 +233,10 @@
                 let userMatches = false;
                 userListItems.forEach(li => {
                     const username = li.querySelector('label').textContent.toLowerCase();
-                    if (username.includes(currentSearchQuery)) {
+                    const isCheckedIn = li.classList.contains('checked-in');
+                    const shouldHide = filterCheckedIn && isCheckedIn;
+
+                    if (username.includes(currentSearchQuery) && !shouldHide) {
                         li.classList.remove('hidden'); // Show the user
                         userMatches = true;
                     } else {
@@ -251,25 +244,33 @@
                     }
                 });
 
-                // Show the entire group if the group name matches the search query
-                if (groupName.includes(currentSearchQuery)) {
-                    groupItem.classList.remove('hidden');  // Show group
-                    userListItems.forEach(li => li.classList.remove('hidden'));  // Show all users in the group
-                } else if (userMatches) {
-                    groupItem.classList.remove('hidden');  // Show group but filtered users
+                // Show the group if the group name matches or if it contains matching users
+                if (groupName.includes(currentSearchQuery) || userMatches) {
+                    groupItem.classList.remove('hidden');
                 } else {
-                    groupItem.classList.add('hidden');  // Hide the group
+                    groupItem.classList.add('hidden');
                 }
             });
         }
 
-        // Function to toggle the filter for checked-in users and groups
-        function toggleFilter() {
+        // Event listener for search input focus
+        searchInput.addEventListener('focus', function () {
+            searchInput.value = ''; // Clear search input when clicked
+            filterGroups(''); // Reset search and display all groups
+        });
+
+        // Handle filter button click
+        filterButton.addEventListener('click', function () {
             filterCheckedIn = !filterCheckedIn; // Toggle the filter state
-            // Update the button text based on filter state
             filterButton.textContent = filterCheckedIn ? 'Filter ON' : 'Filter OFF';
             displayGroups(groups); // Re-display groups with the new filter state
-        }
+        });
+
+        // Handle update data button click
+        const updateDataBtn = document.getElementById("updateDataBtn");
+        updateDataBtn.addEventListener('click', function () {
+            socket.emit('updateDataFromAPI'); // Request to update data from API
+        });
 
         // Receive updated groups from the server
         let groups = [];
@@ -278,33 +279,11 @@
             displayGroups(groups); // Display groups and maintain search filter
         });
 
-        // Handle search input (handles both groups and users)
-        const searchInput = document.getElementById("searchInput");
-
-        // Listen to input event to show or filter groups
-        searchInput.addEventListener('input', function () {
-            if (searchInput.value === '') {
-                filterGroups(''); // Show all groups if search input is empty
-            } else {
-                filterGroups(searchInput.value); // Apply search filter when typing
-            }
-        });
-
-        // Handle filter button click
-        filterButton.addEventListener('click', toggleFilter);
-
-        // Handle update data button click
-        const updateDataBtn = document.getElementById("updateDataBtn");
-        updateDataBtn.addEventListener('click', function() {
-            socket.emit('updateDataFromAPI'); // Request to update data from API
-        });
-
         // Update the checked-in counter
         socket.on('checkedInCount', (data) => {
             checkedInCounter.textContent = data.checkedInUsers;
             totalUsers.textContent = data.totalUsers;
         });
-
     </script>
 
 </body>
