@@ -50,7 +50,7 @@ const processPlayerGroupsWithCheckIn = (results) => {
 // Function to fetch player data from the API
 const fetchPlayerData = async () => {
     try {
-        const response = await axios.get('https://discgolfmetrix.com/api.php?content=result&id=3173926');
+        const response = await axios.get('https://discgolfmetrix.com/api.php?content=result&id=3176854');
         const results = response.data.Competition.Results; // Access the 'Results' array
         processPlayerGroupsWithCheckIn(results); // Process and group players while keeping check-in status
         console.log('Groups processed:', groups);
