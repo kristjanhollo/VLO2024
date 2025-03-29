@@ -1,128 +1,31 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lasnamäe X23 pwrd by Discgolf.ee</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            padding: 20px;
-        }
-
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        h1 {
-            margin: 0;
-            font-size: 24px;
-        }
-
-        .counter {
-            font-size: 20px;
-            margin-bottom: 10px;
-        }
-
-        .update-button, .filter-button {
-            padding: 10px 20px;
-            font-size: 16px;
-            cursor: pointer;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            margin-right: 10px;
-        }
-
-        .update-button:hover, .filter-button:hover {
-            background-color: #0056b3;
-        }
-
-        .search-bar {
-            position: sticky;
-            top: 0;
-            background-color: #f4f4f4;
-            padding: 10px;
-            z-index: 100;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            display: flex;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .search-bar input[type="text"] {
-            width: 300px;
-            padding: 10px;
-            font-size: 16px;
-            margin-right: 10px;
-        }
-
-        .group-list {
-            list-style-type: none;
-            padding: 0;
-        }
-
-        .group-item {
-            margin-bottom: 20px;
-        }
-
-        .group-item h3 {
-            margin: 0;
-            padding: 10px;
-            background-color: #333;
-            color: #fff;
-        }
-
-        .group-item ul {
-            list-style-type: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        .group-item li {
-            padding: 10px;
-            background-color: #fff;
-            margin-bottom: 5px;
-            border-radius: 4px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .group-item li.checked-in {
-            background-color: #d4edda;
-        }
-
-        .group-item label {
-            cursor: pointer;
-        }
-
-        .group-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .hidden {
-            display: none;
-        }
-
-    </style>
+    <title>Disc Golf Check-In System</title>
+    <link rel="stylesheet" href="css/styles.css">
 </head>
+
 <body>
 
     <!-- Header with Title, Update Button, and Filter Button -->
     <div class="header">
-        <h1>Kultuurikatel X22 pwrd by Discgolf.ee</h1>
+        <h1 id="competitionTitle">Disc Golf Check-In System</h1>
         <div>
             <button id="filterButton" class="filter-button">Filter OFF</button> <!-- Filter Button -->
             <button id="updateDataBtn" class="update-button">Update Data</button> <!-- Update Button -->
         </div>
+    </div>
+
+    <!-- API URL Input Section -->
+    <div class="api-input-container">
+        <h3>Change Competition ID</h3>
+        <div class="api-prefix">https://discgolfmetrix.com/api.php?content=result&id=</div>
+        <input type="text" id="apiIdInput" placeholder="Enter competition ID">
+        <button id="changeApiBtn">Change Competition</button>
+        <div id="statusMessage" class="status-message hidden"></div>
     </div>
 
     <!-- Counter for checked-in users -->
@@ -141,172 +44,7 @@
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
-    <script>
-        const socket = io();
-        const groupList = document.getElementById("groupList");
-        const checkedInCounter = document.getElementById("checkedInCounter");
-        const totalUsers = document.getElementById("totalUsers");
-        const filterButton = document.getElementById("filterButton");
-        let currentSearchQuery = ''; // To store the current search query
-        let filterCheckedIn = false; // To store the filter state for checked-in players/groups
-
-        // Function to display groups
-        function displayGroups(groups) {
-            groupList.innerHTML = ''; // Clear previous groups
-            groups.forEach(group => {
-                const groupItem = document.createElement('div');
-                groupItem.classList.add('group-item');
-
-                const allCheckedInGroup = group.users.every(user => user.checkedIn);
-                
-                const groupHeader = document.createElement('div');
-                groupHeader.classList.add('group-header');
-                groupHeader.innerHTML = `
-                    <h3>${group.groupName}</h3>
-                    <label>
-                        <input type="checkbox" class="group-checkbox" ${group.users.every(u => u.checkedIn) ? 'checked' : ''}> Check-in all
-                    </label>
-                `;
-
-                const userList = document.createElement('ul');
-                let allCheckedIn = true; // Assume all users are checked-in initially
-                
-                group.users.forEach(user => {
-                    const li = document.createElement('li');
-                    li.classList.toggle('checked-in', user.checkedIn); // Add checked-in class if true
-                    li.innerHTML = `
-                        <label for="${user.username}">
-                            <input type="checkbox" id="${user.username}" class="check-in-checkbox" ${user.checkedIn ? 'checked' : ''}>
-                            ${user.username}
-                        </label>
-                    `;
-
-                    const checkbox = li.querySelector('input[type="checkbox"]');
-                    checkbox.addEventListener('change', function () {
-                        socket.emit('checkInUser', {
-                            username: user.username,
-                            checkedIn: this.checked
-                        });
-                    });
-
-                    // If any user is not checked in, the group is not fully checked in
-                    if (!user.checkedIn) {
-                        allCheckedIn = false;
-                    }
-
-                    // Apply the hidden class based on the filter state for individual users
-                    if (filterCheckedIn && user.checkedIn) {
-                        li.classList.add('hidden');
-                    } else {
-                        li.classList.remove('hidden');
-                    }
-
-                    groupItem.style = allCheckedIn && filterCheckedIn ? 'display: none;' : '';
-                    li.style.display = user.checkedIn && filterCheckedIn ? 'none' : '';
-
-                    userList.appendChild(li);
-                });
-
-                // Hide fully checked-in groups if filter is active and all users are checked in
-                if (filterCheckedIn && allCheckedIn) {
-                    groupItem.classList.add('hidden');
-                } else {
-                    groupItem.classList.remove('hidden');
-                }
-
-                groupHeader.querySelector('.group-checkbox').addEventListener('change', function () {
-                    socket.emit('checkInGroup', {
-                        groupName: group.groupName,
-                        checkedIn: this.checked
-                    });
-                });
-
-                groupItem.appendChild(groupHeader);
-                groupItem.appendChild(userList);
-                groupList.appendChild(groupItem);
-            });
-
-            // After displaying, apply the current search filter
-            filterGroups(currentSearchQuery);
-        }
-
-        // Function to filter groups and users based on search query
-        function filterGroups(searchQuery) {
-            currentSearchQuery = searchQuery.toLowerCase(); // Store current search query
-            const groupItems = Array.from(document.querySelectorAll('.group-item'));
-
-            groupItems.forEach(groupItem => {
-                const groupName = groupItem.querySelector('h3').textContent.toLowerCase();
-                const userListItems = Array.from(groupItem.querySelectorAll('li'));
-
-                // Filter users within the group based on search query
-                let userMatches = false;
-                userListItems.forEach(li => {
-                    const username = li.querySelector('label').textContent.toLowerCase();
-                    if (username.includes(currentSearchQuery)) {
-                        li.classList.remove('hidden'); // Show the user
-                        userMatches = true;
-                    } else {
-                        li.classList.add('hidden'); // Hide the user
-                    }
-                });
-
-                // Show the entire group if the group name matches the search query
-                if (groupName.includes(currentSearchQuery)) {
-                    groupItem.classList.remove('hidden');  // Show group
-                    userListItems.forEach(li => li.classList.remove('hidden'));  // Show all users in the group
-                } else if (userMatches) {
-                    groupItem.classList.remove('hidden');  // Show group but filtered users
-                } else {
-                    groupItem.classList.add('hidden');  // Hide the group
-                }
-            });
-        }
-
-        // Function to toggle the filter for checked-in users and groups
-        function toggleFilter() {
-            filterCheckedIn = !filterCheckedIn; // Toggle the filter state
-            // Update the button text based on filter state
-            filterButton.textContent = filterCheckedIn ? 'Filter ON' : 'Filter OFF';
-            displayGroups(groups); // Re-display groups with the new filter state
-        }
-
-        // Receive updated groups from the server
-        let groups = [];
-        socket.on('loadGroups', (data) => {
-            groups = data; // Store the groups data
-            displayGroups(groups); // Display groups and maintain search filter
-        });
-
-        // Handle search input (handles both groups and users)
-        const searchInput = document.getElementById("searchInput");
-
-        // Listen to input event to show or filter groups
-        searchInput.addEventListener('focus', function () {
-    searchInput.value = ''; // Clear the search bar
-    filterGroups(''); // Reset displayed groups and users
-});
-
-// Handle search input (handles both groups and users)
-searchInput.addEventListener('input', function () {
-    filterGroups(searchInput.value); // Apply search filter when typing
-});
-        // Handle filter button click
-        filterButton.addEventListener('click', toggleFilter);
-
-        // Handle update data button click
-        const updateDataBtn = document.getElementById("updateDataBtn");
-        updateDataBtn.addEventListener('click', function() {
-            socket.emit('updateDataFromAPI'); // Request to update data from API
-        });
-
-        // Update the checked-in counter
-        socket.on('checkedInCount', (data) => {
-        checkedInCounter.textContent = data.checkedInUsers; // Update checked-in count
-        totalUsers.textContent = data.totalUsers; // Update total user count
-        });
-
-    </script>
-
+    <script src="js/main.js"></script>
 </body>
+
 </html>
