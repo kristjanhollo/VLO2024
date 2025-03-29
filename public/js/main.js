@@ -35,7 +35,8 @@ function displayGroups(groups) {
         groupHeader.innerHTML = `
             <h3>${group.groupName}</h3>
             <label>
-                <input type="checkbox" class="group-checkbox" ${group.users.every(u => u.checkedIn) ? 'checked' : ''}> Check-in all
+                <input type="checkbox" class="group-checkbox" ${group.users.every(u => u.checkedIn) ? 'checked' : ''}>
+                Check-in all
             </label>
         `;
 
@@ -46,8 +47,8 @@ function displayGroups(groups) {
             const li = document.createElement('li');
             li.classList.toggle('checked-in', user.checkedIn); // Add checked-in class if true
             li.innerHTML = `
-                <label for="${user.username}">
-                    <input type="checkbox" id="${user.username}" class="check-in-checkbox" ${user.checkedIn ? 'checked' : ''}>
+                <label>
+                    <input type="checkbox" class="check-in-checkbox" id="${user.username}" ${user.checkedIn ? 'checked' : ''}>
                     ${user.username}
                 </label>
             `;
@@ -72,9 +73,6 @@ function displayGroups(groups) {
                 li.classList.remove('hidden');
             }
 
-            groupItem.style = allCheckedIn && filterCheckedIn ? 'display: none;' : '';
-            li.style.display = user.checkedIn && filterCheckedIn ? 'none' : '';
-
             userList.appendChild(li);
         });
 
@@ -98,13 +96,21 @@ function displayGroups(groups) {
     });
 
     // After displaying, apply the current search filter
-    filterGroups(currentSearchQuery);
+    if (currentSearchQuery) {
+        filterGroups(currentSearchQuery);
+    }
 }
 
 // Function to filter groups and users based on search query
 function filterGroups(searchQuery) {
     currentSearchQuery = searchQuery.toLowerCase(); // Store current search query
     const groupItems = Array.from(document.querySelectorAll('.group-item'));
+
+    if (!currentSearchQuery) {
+        // If search query is empty, just apply the filter checked-in state
+        applyFilterCheckedIn();
+        return;
+    }
 
     groupItems.forEach(groupItem => {
         const groupName = groupItem.querySelector('h3').textContent.toLowerCase();
@@ -113,19 +119,34 @@ function filterGroups(searchQuery) {
         // Filter users within the group based on search query
         let userMatches = false;
         userListItems.forEach(li => {
-            const username = li.querySelector('label').textContent.toLowerCase();
-            if (username.includes(currentSearchQuery)) {
-                li.classList.remove('hidden'); // Show the user
-                userMatches = true;
+            const username = li.querySelector('label').textContent.trim().toLowerCase();
+            const isCheckedIn = li.classList.contains('checked-in');
+            
+            // Hide user if it doesn't match search or is filtered out due to being checked in
+            const hideBySearch = !username.includes(currentSearchQuery);
+            const hideByFilter = filterCheckedIn && isCheckedIn;
+            
+            if (hideBySearch || hideByFilter) {
+                li.classList.add('hidden');
             } else {
-                li.classList.add('hidden'); // Hide the user
+                li.classList.remove('hidden');
+                userMatches = true;
             }
         });
 
         // Show the entire group if the group name matches the search query
         if (groupName.includes(currentSearchQuery)) {
             groupItem.classList.remove('hidden');  // Show group
-            userListItems.forEach(li => li.classList.remove('hidden'));  // Show all users in the group
+            
+            // Show only non-filtered users
+            userListItems.forEach(li => {
+                const isCheckedIn = li.classList.contains('checked-in');
+                if (filterCheckedIn && isCheckedIn) {
+                    li.classList.add('hidden');
+                } else {
+                    li.classList.remove('hidden');
+                }
+            });
         } else if (userMatches) {
             groupItem.classList.remove('hidden');  // Show group but filtered users
         } else {
@@ -134,12 +155,56 @@ function filterGroups(searchQuery) {
     });
 }
 
+// Function to apply just the filter for checked-in users
+function applyFilterCheckedIn() {
+    const groupItems = Array.from(document.querySelectorAll('.group-item'));
+    
+    groupItems.forEach(groupItem => {
+        const userListItems = Array.from(groupItem.querySelectorAll('li'));
+        let allCheckedIn = true;
+        let anyVisible = false;
+        
+        userListItems.forEach(li => {
+            const isCheckedIn = li.classList.contains('checked-in');
+            console.log('Checked in:', isCheckedIn); // Debugging line
+            if (filterCheckedIn && isCheckedIn) {
+                li.classList.add('hidden');
+            } else {
+                li.classList.remove('hidden');
+                anyVisible = true;
+            }
+            
+            if (!isCheckedIn) {
+                allCheckedIn = false;
+            }
+        });
+        
+        // Hide groups where all users are checked in and filter is active
+        if (filterCheckedIn && allCheckedIn) {
+            groupItem.classList.add('hidden');
+        } else if (!anyVisible) {
+            groupItem.classList.add('hidden');
+        } else {
+            groupItem.classList.remove('hidden');
+        }
+    });
+}
+
 // Function to toggle the filter for checked-in users and groups
 function toggleFilter() {
     filterCheckedIn = !filterCheckedIn; // Toggle the filter state
+    
     // Update the button text based on filter state
     filterButton.textContent = filterCheckedIn ? 'Filter ON' : 'Filter OFF';
-    displayGroups(groups); // Re-display groups with the new filter state
+    filterButton.classList.toggle('btn-warning', !filterCheckedIn);
+    filterButton.classList.toggle('btn-primary', filterCheckedIn);
+    
+    // Apply the filter without messing with the search
+    if (currentSearchQuery) {
+        filterGroups(currentSearchQuery);
+    } else {
+        applyFilterCheckedIn();
+    }
 }
 
 // Function to show status message
@@ -176,7 +241,8 @@ function extractCompetitionId(url) {
 // Search input handling
 searchInput.addEventListener('focus', function() {
     searchInput.value = ''; // Clear the search bar
-    filterGroups(''); // Reset displayed groups and users
+    currentSearchQuery = '';
+    applyFilterCheckedIn(); // Reset displayed groups and users, keeping filter state
 });
 
 searchInput.addEventListener('input', function() {
@@ -189,18 +255,46 @@ filterButton.addEventListener('click', toggleFilter);
 // Update data button click
 updateDataBtn.addEventListener('click', function() {
     socket.emit('updateDataFromAPI'); // Request to update data from API
+    
+    // Provide visual feedback
+    updateDataBtn.textContent = 'Updating...';
+    updateDataBtn.disabled = true;
+    
+    // Reset button after 1.5 seconds
+    setTimeout(() => {
+        updateDataBtn.textContent = 'Update Data';
+        updateDataBtn.disabled = false;
+    }, 1500);
 });
 
 // Change API button click
 changeApiBtn.addEventListener('click', function() {
     const competitionId = apiIdInput.value.trim();
     if (competitionId) {
+        // Provide visual feedback
+        changeApiBtn.textContent = 'Loading...';
+        changeApiBtn.disabled = true;
+        
         // Extract just the ID if a full URL was pasted
         const cleanId = extractCompetitionId(competitionId);
         const newApiUrl = API_BASE_URL + cleanId;
         socket.emit('changeApiUrl', newApiUrl);
+        
+        // Reset button after 1.5 seconds
+        setTimeout(() => {
+            changeApiBtn.textContent = 'Change Competition';
+            changeApiBtn.disabled = false;
+        }, 1500);
     } else {
         showStatusMessage('Please enter a valid competition ID', true);
+    }
+});
+
+// Enter key in API input field
+apiIdInput.addEventListener('keypress', function(event) {
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        changeApiBtn.click();
     }
 });
 
