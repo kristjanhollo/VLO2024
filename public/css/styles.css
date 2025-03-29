@@ -1,11 +1,71 @@
+/* CSS Variables for Themes */
+:root {
+    /* Light Theme (default) */
+    --bg-color: #f5f7fa;
+    --card-bg: #ffffff;
+    --header-bg: #2c3e50;
+    --text-color: #333333;
+    --text-light: #7f8c8d;
+    --text-on-dark: #ffffff;
+    --border-color: #dce0e6;
+    --input-bg: #f5f7fa;
+    --primary-color: #3498db;
+    --primary-dark: #2980b9;
+    --success-color: #2ecc71;
+    --success-dark: #27ae60;
+    --warning-color: #f39c12;
+    --warning-dark: #e67e22;
+    --error-color: #e74c3c;
+    --error-dark: #c0392b;
+    --success-bg: #e8f7ef;
+    --error-bg: #fbeae9;
+    --shadow-color: rgba(0, 0, 0, 0.05);
+    --modal-overlay: rgba(0, 0, 0, 0.7);
+    --group-header-bg: #34495e;
+    --check-in-item: #e8f7ef;
+    --check-in-hover: #d5f2e3;
+    --item-border: #ecf0f1;
+    --item-hover: #f8f9fa;
+}
+
+/* Dark Theme */
+[data-theme="dark"] {
+    --bg-color: #1a1a2e;
+    --card-bg: #16213e;
+    --header-bg: #0f3460;
+    --text-color: #e0e0e0;
+    --text-light: #a0a0a0;
+    --text-on-dark: #ffffff;
+    --border-color: #2c3e50;
+    --input-bg: #0f3460;
+    --primary-color: #4a9edb;
+    --primary-dark: #3a8edb;
+    --success-color: #2ecc71;
+    --success-dark: #27ae60;
+    --warning-color: #f39c12;
+    --warning-dark: #e67e22;
+    --error-color: #e74c3c;
+    --error-dark: #c0392b;
+    --success-bg: #1c3b2b;
+    --error-bg: #3b1c1c;
+    --shadow-color: rgba(0, 0, 0, 0.2);
+    --modal-overlay: rgba(0, 0, 0, 0.8);
+    --group-header-bg: #0f3460;
+    --check-in-item: #1c3b2b;
+    --check-in-hover: #183324;
+    --item-border: #1e2a39;
+    --item-hover: #1e293b;
+}
+
 /* Base styles */
 body {
     font-family: 'Roboto', 'Segoe UI', Arial, sans-serif;
-    background-color: #f5f7fa;
+    background-color: var(--bg-color);
     padding: 0;
     margin: 0;
-    color: #333;
+    color: var(--text-color);
     line-height: 1.5;
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .container {
@@ -14,18 +74,49 @@ body {
     padding: 0 20px;
 }
 
+/* Theme Toggle */
+.theme-toggle {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: var(--card-bg);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 10px var(--shadow-color);
+    z-index: 1000;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.theme-toggle:hover {
+    background-color: var(--primary-color);
+    color: var(--text-on-dark);
+}
+
+.theme-toggle svg {
+    width: 24px;
+    height: 24px;
+}
+
 /* Header styles */
 .header {
-    background-color: #2c3e50;
-    color: white;
+    background-color: var(--header-bg);
+    color: var(--text-on-dark);
     padding: 16px 24px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 4px var(--shadow-color);
     position: sticky;
     top: 0;
     z-index: 1000;
+    transition: background-color 0.3s ease;
 }
 
 h1 {
@@ -55,46 +146,47 @@ h1 {
 }
 
 .btn-primary {
-    background-color: #3498db;
-    color: white;
+    background-color: var(--primary-color);
+    color: var(--text-on-dark);
 }
 
 .btn-primary:hover {
-    background-color: #2980b9;
+    background-color: var(--primary-dark);
 }
 
 .btn-success {
-    background-color: #2ecc71;
-    color: white;
+    background-color: var(--success-color);
+    color: var(--text-on-dark);
 }
 
 .btn-success:hover {
-    background-color: #27ae60;
+    background-color: var(--success-dark);
 }
 
 .btn-warning {
-    background-color: #f39c12;
-    color: white;
+    background-color: var(--warning-color);
+    color: var(--text-on-dark);
 }
 
 .btn-warning:hover {
-    background-color: #e67e22;
+    background-color: var(--warning-dark);
 }
 
 /* API input container */
 .api-input-container {
-    background-color: white;
+    background-color: var(--card-bg);
     border-radius: 8px;
     padding: 20px;
     margin: 20px 0;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 2px 10px var(--shadow-color);
+    transition: background-color 0.3s ease;
 }
 
 .api-input-container h3 {
     margin-top: 0;
     margin-bottom: 15px;
     font-size: 1.2rem;
-    color: #2c3e50;
+    color: var(--text-color);
 }
 
 .api-input-wrapper {
@@ -106,17 +198,18 @@ h1 {
 
 .api-prefix {
     font-family: monospace;
-    background-color: #f5f7fa;
+    background-color: var(--input-bg);
     padding: 10px 12px;
     border-radius: 4px 0 0 4px;
-    border: 1px solid #dce0e6;
+    border: 1px solid var(--border-color);
     border-right: none;
-    color: #7f8c8d;
+    color: var(--text-light);
     font-size: 0.9rem;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: 300px;
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
 }
 
 .api-input-container input {
@@ -124,13 +217,16 @@ h1 {
     min-width: 100px;
     padding: 10px 12px;
     font-size: 0.9rem;
-    border: 1px solid #dce0e6;
+    border: 1px solid var(--border-color);
     border-radius: 0 4px 4px 0;
     outline: none;
+    background-color: var(--card-bg);
+    color: var(--text-color);
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
 }
 
 .api-input-container input:focus {
-    border-color: #3498db;
+    border-color: var(--primary-color);
     box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
 }
 
@@ -143,32 +239,33 @@ h1 {
 }
 
 .status-success {
-    background-color: #e8f7ef;
-    color: #27ae60;
-    border-left: 4px solid #2ecc71;
+    background-color: var(--success-bg);
+    color: var(--success-color);
+    border-left: 4px solid var(--success-color);
 }
 
 .status-error {
-    background-color: #fbeae9;
-    color: #c0392b;
-    border-left: 4px solid #e74c3c;
+    background-color: var(--error-bg);
+    color: var(--error-color);
+    border-left: 4px solid var(--error-color);
 }
 
 /* Counter */
 .counter {
-    background-color: white;
+    background-color: var(--card-bg);
     padding: 15px 20px;
     border-radius: 8px;
     margin: 20px 0;
     font-size: 1.1rem;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 2px 10px var(--shadow-color);
     display: flex;
     align-items: center;
+    transition: background-color 0.3s ease;
 }
 
 .counter-numbers {
     font-weight: 700;
-    color: #3498db;
+    color: var(--primary-color);
 }
 
 /* Search bar */
@@ -176,27 +273,30 @@ h1 {
     position: sticky;
     top: 70px;
     z-index: 100;
-    background-color: white;
+    background-color: var(--card-bg);
     padding: 15px;
     border-radius: 8px;
     margin: 20px 0;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 2px 10px var(--shadow-color);
+    transition: background-color 0.3s ease;
 }
 
 .search-bar input {
     width: 80%;
     padding: 12px 15px;
     font-size: 0.9rem;
-    border: 1px solid #dce0e6;
+    border: 1px solid var(--border-color);
     border-radius: 4px;
-    background-color: #f5f7fa;
+    background-color: var(--input-bg);
+    color: var(--text-color);
     outline: none;
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
 }
 
 .search-bar input:focus {
-    border-color: #3498db;
+    border-color: var(--primary-color);
     box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
-    background-color: white;
+    background-color: var(--card-bg);
 }
 
 /* Group list */
@@ -208,16 +308,18 @@ h1 {
     margin-bottom: 20px;
     border-radius: 8px;
     overflow: hidden;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 2px 10px var(--shadow-color);
+    transition: box-shadow 0.3s ease;
 }
 
 .group-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background-color: #34495e;
-    color: white;
+    background-color: var(--group-header-bg);
+    color: var(--text-on-dark);
     padding: 10px 15px;
+    transition: background-color 0.3s ease;
 }
 
 .group-header h3 {
@@ -242,16 +344,17 @@ h1 {
     list-style-type: none;
     padding: 0;
     margin: 0;
-    background-color: white;
+    background-color: var(--card-bg);
+    transition: background-color 0.3s ease;
 }
 
 .group-item li {
     padding: 12px 15px;
-    border-bottom: 1px solid #ecf0f1;
+    border-bottom: 1px solid var(--item-border);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    transition: background-color 0.2s ease;
+    transition: background-color 0.2s ease, border-color 0.3s ease;
 }
 
 .group-item li:last-child {
@@ -259,15 +362,15 @@ h1 {
 }
 
 .group-item li:hover {
-    background-color: #f8f9fa;
+    background-color: var(--item-hover);
 }
 
 .group-item li.checked-in {
-    background-color: #e8f7ef;
+    background-color: var(--check-in-item);
 }
 
 .group-item li.checked-in:hover {
-    background-color: #d5f2e3;
+    background-color: var(--check-in-hover);
 }
 
 .group-item label {
@@ -275,6 +378,7 @@ h1 {
     align-items: center;
     width: 100%;
     cursor: pointer;
+    color: var(--text-color);
 }
 
 .group-item input[type="checkbox"] {
@@ -291,18 +395,19 @@ input[type="checkbox"] {
     appearance: none;
     width: 18px;
     height: 18px;
-    border: 2px solid #bdc3c7;
+    border: 2px solid var(--text-light);
     border-radius: 3px;
     outline: none;
     transition: all 0.2s ease;
     position: relative;
     cursor: pointer;
     vertical-align: middle;
+    background-color: var(--card-bg);
 }
 
 input[type="checkbox"]:checked {
-    background-color: #3498db;
-    border-color: #3498db;
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
 }
 
 input[type="checkbox"]:checked::after {
@@ -310,11 +415,79 @@ input[type="checkbox"]:checked::after {
     position: absolute;
     width: 5px;
     height: 10px;
-    border: solid white;
+    border: solid var(--text-on-dark);
     border-width: 0 2px 2px 0;
     transform: rotate(45deg);
     top: 1px;
     left: 5px;
+}
+
+/* QR Code Modal */
+.qr-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--modal-overlay);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+}
+
+.qr-modal-content {
+    background-color: var(--card-bg);
+    padding: 25px;
+    border-radius: 8px;
+    max-width: 400px;
+    width: 90%;
+    text-align: center;
+    position: relative;
+    color: var(--text-color);
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.close-modal {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 24px;
+    cursor: pointer;
+    color: var(--text-light);
+}
+
+.close-modal:hover {
+    color: var(--text-color);
+}
+
+#qrcode {
+    display: flex;
+    justify-content: center;
+    margin: 20px 0;
+}
+
+.qr-modal-content input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    margin: 10px 0;
+    font-size: 12px;
+    background-color: var(--input-bg);
+    color: var(--text-color);
+}
+
+.btn-qr {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 5px;
+    color: var(--primary-color);
+}
+
+.btn-qr:hover {
+    color: var(--primary-dark);
 }
 
 /* Utility classes */
@@ -343,7 +516,7 @@ input[type="checkbox"]:checked::after {
     .api-prefix {
         max-width: 100%;
         border-radius: 4px;
-        border-right: 1px solid #dce0e6;
+        border-right: 1px solid var(--border-color);
         margin-bottom: 5px;
         width: 100%;
         box-sizing: border-box;
@@ -357,5 +530,12 @@ input[type="checkbox"]:checked::after {
 
     .search-bar {
         top: 112px;
+    }
+
+    .theme-toggle {
+        bottom: 10px;
+        right: 10px;
+        width: 40px;
+        height: 40px;
     }
 }
